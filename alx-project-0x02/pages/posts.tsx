@@ -1,23 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Head from 'next/head';
 import Header from '@/components/layout/Header';
 import PostCard from '@/components/common/PostCard';
 import { PostProps } from '@/interfaces';
 
-export default function Posts() {
-  const [posts, setPosts] = useState<PostProps[]>([]);
-  const [loading, setLoading] = useState(true);
+interface PostsPageProps {
+  posts: PostProps[];
+}
 
-  useEffect(() => {
-    fetch('https://jsonplaceholder.typicode.com/posts?_limit=10')
-      .then((res) => res.json())
-      .then((data) => {
-        setPosts(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
-
+export default function Posts({ posts }: PostsPageProps) {
   return (
     <div>
       <Head>
@@ -30,21 +21,30 @@ export default function Posts() {
       <main className="p-8">
         <h2 className="text-3xl font-bold text-center mb-6">Posts</h2>
 
-        {loading ? (
-          <p className="text-center">Loading posts...</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {posts.map((post) => (
-              <PostCard
-                key={post.id}
-                userId={post.userId}
-                title={post.title}
-                body={post.body}
-              />
-            ))}
-          </div>
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {posts.map((post) => (
+            <PostCard
+              key={post.id}
+              userId={post.userId}
+              title={post.title}
+              body={post.body}
+            />
+          ))}
+        </div>
       </main>
     </div>
   );
+}
+
+// This function gets called at build time
+export async function getStaticProps() {
+  const res = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=10');
+  const posts: PostProps[] = await res.json();
+
+  return {
+    props: {
+      posts,
+    },
+    revalidate: 60, // Optional: re-generate page every 60 seconds
+  };
 }
